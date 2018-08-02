@@ -10,7 +10,7 @@ module BreachMitigation
       status, headers, body = @app.call(env)
 
       # Only pad HTML/XHTML documents
-      if headers['Content-Type'] =~ /text\/x?html/ && Rack::Request.new(env).ssl?
+      if !webhook?(env) && headers['Content-Type'] =~ /text\/x?html/ && Rack::Request.new(env).ssl?
         # Copy the existing response to a new object
         response = Rack::Response.new(body, status, headers)
 
@@ -44,6 +44,11 @@ module BreachMitigation
       junk = (0...length).inject("") { |junk| junk << ALPHABET[rand(ALPHABET.size)] }
 
       "\n<!-- This is a random-length HTML comment: #{junk} -->".html_safe
+    end
+
+    def webhook?(env)
+      path = env['REQUEST_PATH'] || env['PATH_INFO']
+      path.match(/\/webhooks\//)
     end
   end
 end
